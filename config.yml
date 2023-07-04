@@ -1,0 +1,9 @@
+log:
+  level: INFO
+  path: /logs
+  retention_days: 5
+
+projector:
+  brand: benq
+  port: /dev/ttyUSB0
+  cooldown_minutes: 10
