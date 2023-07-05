@@ -1,7 +1,4 @@
 global-variables:
-  home_registry: 
-    from_secret: home_registry_host
-  remote_registry: docker.io
   home_repo: adam/${DRONE_REPO_NAME}
   remote_repo: atomicbeast101/${DRONE_REPO_NAME}
 
@@ -20,7 +17,8 @@ steps:
   - name: Build&Push Docker Image to Home Registry
     image: plugins/docker
     settings:
-      registry: *home_registry
+      registry: 
+        from_secret: home_registry_host
       repo: *home_repo
       username: 
         from_secret: home_registry_username
@@ -38,7 +36,7 @@ steps:
   - name: Build&Push Docker Image to Remote Registry
     image: plugins/docker
     settings:
-      registry: *remote_registry
+      registry: docker.io
       repo: *remote_repo
       username: 
         from_secret: remote_registry_username
