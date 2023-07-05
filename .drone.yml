@@ -1,0 +1,29 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: Build test docker image
+    image: plugins/docker
+    settings:
+      registry: registry-svc.default.svc.potato.kub:5000
+      repo: atomicbeast101/ha-projector-controller-server
+      tags: 
+        - ${DRONE_COMMIT_BRANCH}
+    when:
+      branch:
+        exclude:
+          - master
+  - name: Build stable docker image
+    image: plugins/docker
+    settings:
+      registry: registry-svc.default.svc.potato.kub:5000
+      repo: atomicbeast101/ha-projector-controller-server
+      tags: 
+        - ${DRONE_COMMIT_BRANCH}
+        - latest
+    when:
+      branch:
+        include:
+          - master
