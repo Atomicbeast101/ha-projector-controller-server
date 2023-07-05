@@ -27,3 +27,17 @@ steps:
       branch:
         include:
           - master
+  # - name: Build stable docker image for DockerHub
+  #   image: plugins/docker
+  #   settings:
+  #     registry: registry-svc.default.svc.potato.kub:5000
+  #     username: 
+  #     password: 
+  #     repo: atomicbeast101/ha-projector-controller-server
+  #     tags: 
+  #       - ${DRONE_COMMIT_BRANCH}
+  #       - latest
+  #   when:
+  #     branch:
+  #       include:
+  #         - master

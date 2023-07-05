@@ -2,7 +2,8 @@ FROM python:3
 
 # Add dependencies
 RUN mkdir -p /app /logs /config
-RUN pip install -r requirements.txt
+ADD requirements.txt /requirements.txt
+RUN pip install -r /requirements.txt
 
 # Copy files over
 ADD bin /app
