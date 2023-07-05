@@ -1,48 +1,73 @@
+global-variables:
+  home_registry: 
+    from_secret: home_registry_host
+  remote_registry: docker.io
+  home_repo: adam/${DRONE_REPO_NAME}
+  remote_repo: atomicbeast101/${DRONE_REPO_NAME}
+
 # Test
 ---
 kind: pipeline
 type: docker
-name: default
+name: test
 
 trigger:
   branch: 
     - v*.*
-
-steps:
-  - name: build_docker_image
-    image: plugins/docker
-    settings:
-      registry: 
-        from_secret: test_registry_host
-      repo: 
-        from_secret: test_registry_repo
-      username: 
-        from_secret: test_registry_username
-      password: 
-        from_secret: test_registry_password
-      tags: 
-        - ${DRONE_COMMIT_BRANCH}
-
-# Production
----
-kind: pipeline
-type: docker
-name: default
-
-trigger:
-  branch: 
     - master
 
 steps:
-  - name: build_docker_image
+  - name: Build&Push Docker Image to Home Registry
     image: plugins/docker
     settings:
-      registry: docker.io
-      repo: docker.io/atomicbeast101/ha-projector-controller-server
+      registry: *home_registry
+      repo: *home_repo
       username: 
-        from_secret: prod_registry_username
+        from_secret: home_registry_username
       password: 
-        from_secret: prod_registry_password
+        from_secret: home_registry_password
+      tags: 
+        - ${DRONE_COMMIT_BRANCH}
+    when:
+      branch:
+        - v*.*
+        - master
+
+  # TODO: Include some automated testing here
+
+  - name: Build&Push Docker Image to Remote Registry
+    image: plugins/docker
+    settings:
+      registry: *remote_registry
+      repo: *remote_repo
+      username: 
+        from_secret: remote_registry_username
+      password: 
+        from_secret: remote_registry_password
       tags: 
         - ${DRONE_COMMIT_BRANCH}
         - latest
+    when:
+      branch:
+        - master
+
+  - name: notify_developer
+    image: fredix/arm64v8-alpine-drone-gotify
+    settings:
+      gotifyendpoint: 
+        from_secret: gotify_endpoint
+      gotifytoken: 
+        from_secret: gotify_token
+      gotifytitle: 
+      gotifypriority: 5
+      message: >
+        {{#success build.status}}
+          ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image has been built and successfully tested!
+        {{else}}
+          Tests has failed for ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH}! Please see logs for details.
+        {{/success}}
+    depends_on:
+      - Build&Push Docker Image to Home Registry
+      - Build&Push Docker Image to Remote Registry
+    when:
+      status: [success, failure]
