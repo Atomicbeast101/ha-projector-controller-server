@@ -45,14 +45,14 @@ steps:
         - master
 
   - name: notify_developer
-    image: fredix/arm64v8-alpine-drone-gotify
+    image: skierz/drone-gotify
     settings:
-      gotifyendpoint: 
+      url: 
         from_secret: gotify_endpoint
-      gotifytoken: 
+      token: 
         from_secret: gotify_token
-      gotifytitle: Drone DevOps
-      gotifypriority: 5
+      priority: 5
+      title: Drone DevOps
       message: >
         {{#success build.status}}
           ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image has been built and successfully tested!
