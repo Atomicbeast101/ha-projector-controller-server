@@ -1,43 +1,48 @@
+# Test
 ---
 kind: pipeline
 type: docker
 name: default
 
+trigger:
+  branch: 
+    - v*.*
+
 steps:
-  - name: Build test docker image
+  - name: build_docker_image
     image: plugins/docker
     settings:
-      registry: registry-svc.default.svc.potato.kub:5000
-      repo: atomicbeast101/ha-projector-controller-server
+      registry: 
+        from_secret: test_registry_host
+      repo: 
+        from_secret: test_registry_repo
+      username: 
+        from_secret: test_registry_username
+      password: 
+        from_secret: test_registry_password
       tags: 
         - ${DRONE_COMMIT_BRANCH}
-    when:
-      branch:
-        exclude:
-          - master
-  - name: Build stable docker image
+
+# Production
+---
+kind: pipeline
+type: docker
+name: default
+
+trigger:
+  branch: 
+    - master
+
+steps:
+  - name: build_docker_image
     image: plugins/docker
     settings:
-      registry: registry-svc.default.svc.potato.kub:5000
-      repo: atomicbeast101/ha-projector-controller-server
+      registry: docker.io
+      repo: docker.io/atomicbeast101/ha-projector-controller-server
+      username: 
+        from_secret: prod_registry_username
+      password: 
+        from_secret: prod_registry_password
       tags: 
         - ${DRONE_COMMIT_BRANCH}
         - latest
-    when:
-      branch:
-        include:
-          - master
-  # - name: Build stable docker image for DockerHub
-  #   image: plugins/docker
-  #   settings:
-  #     registry: registry-svc.default.svc.potato.kub:5000
-  #     username: 
-  #     password: 
-  #     repo: atomicbeast101/ha-projector-controller-server
-  #     tags: 
-  #       - ${DRONE_COMMIT_BRANCH}
-  #       - latest
-  #   when:
-  #     branch:
-  #       include:
-  #         - master
