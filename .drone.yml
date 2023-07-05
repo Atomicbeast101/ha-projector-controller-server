@@ -43,7 +43,6 @@ steps:
     image: plugins/webhook
     settings:
       urls: $$GOTIFY_ENDPOINT/message?token=$$GOTIFY_TOKEN
-        from_secret: gotify_endpoint
       content_type: application/json
       template: |
         {
