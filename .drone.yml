@@ -1,8 +1,3 @@
-global-variables:
-  home_repo: adam/${DRONE_REPO_NAME}
-  remote_repo: atomicbeast101/${DRONE_REPO_NAME}
-
-# Test
 ---
 kind: pipeline
 type: docker
@@ -19,7 +14,7 @@ steps:
     settings:
       registry: 
         from_secret: home_registry_host
-      repo: *home_repo
+      repo: adam/${DRONE_REPO_NAME}
       username: 
         from_secret: home_registry_username
       password: 
@@ -37,7 +32,7 @@ steps:
     image: plugins/docker
     settings:
       registry: docker.io
-      repo: *remote_repo
+      repo: atomicbeast101/${DRONE_REPO_NAME}
       username: 
         from_secret: remote_registry_username
       password: 
@@ -56,7 +51,7 @@ steps:
         from_secret: gotify_endpoint
       gotifytoken: 
         from_secret: gotify_token
-      gotifytitle: 
+      gotifytitle: Drone DevOps
       gotifypriority: 5
       message: >
         {{#success build.status}}
