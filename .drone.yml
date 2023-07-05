@@ -7,6 +7,8 @@ trigger:
   branch: 
     - v*.*
     - master
+  event:
+    - push
 
 steps:
   - name: Build&Push Docker Image to Home Registry
@@ -54,11 +56,11 @@ steps:
       priority: 5
       title: Drone DevOps
       message: >
-        {{#success build.status}}
-          ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image has been built and successfully tested!
-        {{else}}
-          Tests has failed for ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH}! Please see logs for details.
-        {{/success}}
+        {% if 'success' in DRONE_BUILD_STATUS %}
+          {{ DRONE_REPO_NAME }}:{{ DRONE_COMMIT_BRANCH }} image has been built and successfully tested!
+        {% else %}
+          Tests has failed for {{ DRONE_REPO_NAME }}:{{ DRONE_COMMIT_BRANCH }}! Please see logs for details.
+        {% endif %}
     depends_on:
       - Build&Push Docker Image to Home Registry
       - Build&Push Docker Image to Remote Registry
