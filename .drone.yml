@@ -41,9 +41,10 @@ steps:
 
   - name: notify_developer
     image: plugins/webhook
-    secrets: [ gotify_endpoint, gotify_token ]
+    secrets:
+      - source: gotify_endpoint
+        target: urls
     settings:
-      urls: $$GOTIFY_ENDPOINT/message?token=$$GOTIFY_TOKEN
       content_type: application/json
       template: |
         {
