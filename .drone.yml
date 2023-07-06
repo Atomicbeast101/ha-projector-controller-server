@@ -41,10 +41,9 @@ steps:
 
   - name: notify_developer
     image: plugins/webhook
-    secrets:
-      - source: gotify_endpoint
-        target: urls
     settings:
+      urls:
+        from_secret: gotify_endpoint
       content_type: application/json
       template: |
         {
