@@ -40,7 +40,7 @@ steps:
         {
           "priority": 5,
           "title": "Drone DevOps",
-          "message": "[${DRONE_STAGE_STATUS}] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image has been built and pushed to home registry! Test has been completed on it."
+          "message": "[${DRONE_STAGE_STATUS}] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image built&pushed to home registry! Test has been completed on it."
         }
     depends_on:
       - Build&Push Docker Image to Registry
@@ -83,7 +83,7 @@ steps:
         {
           "priority": 5,
           "title": "Drone DevOps",
-          "message": "[${DRONE_STAGE_STATUS}] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image has been built and pushed to docker.io!"
+          "message": "[${DRONE_STAGE_STATUS}] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image built&pushed to docker.io!"
         }
     depends_on:
       - Build&Push Docker Image to Registry
