@@ -39,7 +39,6 @@ steps:
       inventory: 
         from_secret: ansible_host
       syntax_check: true
-      galaxy: tests/ansible_requirements.yml
       requirements: tests/python_requirements.txt
     # depends_on:
     #   - Build&Push Docker Image to Home Registry
