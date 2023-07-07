@@ -11,9 +11,9 @@ trigger:
 steps:
   - name: Build&Push Docker Image to Registry
     image: plugins/docker
-    secrets:
-      - source: home_registry_host
-        target: home_registry_host
+    environment:
+      HOME_REGISTRY_HOST:
+        from_secret: home_registry_host
     settings:
       registry: 
         from_secret: home_registry_host
