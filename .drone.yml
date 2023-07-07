@@ -30,7 +30,7 @@ steps:
 
   # TODO: Include some automated testing here
 
-  - name: notify_developer
+  - name: Notify Developer
     image: plugins/webhook
     settings:
       urls:
@@ -73,7 +73,7 @@ steps:
       branch:
         - master
 
-  - name: notify_developer
+  - name: Notify Developer
     image: plugins/webhook
     settings:
       urls:
