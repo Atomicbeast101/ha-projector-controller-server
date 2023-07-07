@@ -3,14 +3,21 @@ kind: pipeline
 type: docker
 name: test
 
+trigger:
+  branch:
+    exclude:
+      - master
+
 steps:
-  - name: Build&Push Docker Image to Home Registry
+  - name: Build&Push Docker Image to Registry
     image: plugins/docker
+    secrets:
+      - source: home_registry_host
+        target: home_registry_host
     settings:
       registry: 
         from_secret: home_registry_host
-      repo:
-        from_secret: home_registry_repo
+      repo: ${HOME_REGISTRY_HOST}/adam/${DRONE_REPO_NAME}
       username: 
         from_secret: home_registry_username
       password: 
@@ -20,11 +27,37 @@ steps:
     when:
       branch:
         - v*.*
-        - master
 
   # TODO: Include some automated testing here
 
-  - name: Build&Push Docker Image to Remote Registry
+  - name: notify_developer
+    image: plugins/webhook
+    settings:
+      urls:
+        from_secret: gotify_endpoint
+      content_type: application/json
+      template: |
+        {
+          "priority": 5,
+          "title": "Drone DevOps",
+          "message": "[${DRONE_BUILD_STATUS}] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image has been built and pushed to home registry! Test has been completed on it."
+        }
+    depends_on:
+      - Build&Push Docker Image to Registry
+    when:
+      status: [success, failure]
+
+---
+kind: pipeline
+type: docker
+name: production
+
+trigger:
+  branch:
+    - master
+
+steps:
+  - name: Build&Push Docker Image to Registry
     image: plugins/docker
     settings:
       registry: docker.io
@@ -50,10 +83,9 @@ steps:
         {
           "priority": 5,
           "title": "Drone DevOps",
-          "message": "${DRONE_BUILD_STATUS} on building & testing ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image!"
+          "message": "[${DRONE_BUILD_STATUS}] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image has been built and pushed to docker.io!"
         }
     depends_on:
-      - Build&Push Docker Image to Home Registry
-      - Build&Push Docker Image to Remote Registry
+      - Build&Push Docker Image to Registry
     when:
       status: [success, failure]
