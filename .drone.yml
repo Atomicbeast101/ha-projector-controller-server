@@ -8,28 +8,28 @@ trigger:
     - v*.*
 
 steps:
-  - name: Build&Push Docker Image to Home Registry
-    image: plugins/docker
-    settings:
-      registry: registry.potatolab.dev
-      repo: registry.potatolab.dev/adam/${DRONE_REPO_NAME}
-      username: 
-        from_secret: home_registry_username
-      password: 
-        from_secret: home_registry_password
-      tags: 
-        - ${DRONE_COMMIT_BRANCH}-beta
+  # - name: Build&Push Docker Image to Home Registry
+  #   image: plugins/docker
+  #   settings:
+  #     registry: registry.potatolab.dev
+  #     repo: registry.potatolab.dev/adam/${DRONE_REPO_NAME}
+  #     username: 
+  #       from_secret: home_registry_username
+  #     password: 
+  #       from_secret: home_registry_password
+  #     tags: 
+  #       - ${DRONE_COMMIT_BRANCH}-beta
 
-  - name: Build&Push Docker Image to Remote Registry
-    image: plugins/docker
-    settings:
-      repo: atomicbeast101/${DRONE_REPO_NAME}
-      username: 
-        from_secret: remote_registry_username
-      password: 
-        from_secret: remote_registry_password
-      tags: 
-        - ${DRONE_SOURCE_BRANCH}-beta
+  # - name: Build&Push Docker Image to Remote Registry
+  #   image: plugins/docker
+  #   settings:
+  #     repo: atomicbeast101/${DRONE_REPO_NAME}
+  #     username: 
+  #       from_secret: remote_registry_username
+  #     password: 
+  #       from_secret: remote_registry_password
+  #     tags: 
+  #       - ${DRONE_SOURCE_BRANCH}-beta
 
   - name: Deploy to Test Infra
     image: plugins/ansible:3
@@ -40,15 +40,13 @@ steps:
         from_secret: ansible_host
       syntax_check: true
       galaxy: tests/ansible_requirements.txt
-      requirements:
-        - docker
-        - docker-compose
-    depends_on:
-      - Build&Push Docker Image to Home Registry
-      - Build&Push Docker Image to Remote Registry
-    when:
-      status:
-        - success
+      requirements: tests/python_requirements.txt
+    # depends_on:
+    #   - Build&Push Docker Image to Home Registry
+    #   - Build&Push Docker Image to Remote Registry
+    # when:
+    #   status:
+    #     - success
 
   # - name: Run Tests
   #   image: python
