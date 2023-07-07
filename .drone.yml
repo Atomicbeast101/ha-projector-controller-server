@@ -22,7 +22,7 @@ steps:
         - v*.*
         - master
 
-  # TODO = Include some automated testing here
+  # TODO: Include some automated testing here
 
   - name: Build&Push Docker Image to Remote Registry
     image: plugins/docker
