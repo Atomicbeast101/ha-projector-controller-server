@@ -1,15 +1,111 @@
 ---
 kind: pipeline
 type: docker
-name: test
+name: Test
 
 trigger:
   branch:
-    exclude:
-      - master
+    - v*.*
 
 steps:
-  - name: Build&Push Docker Image to Registry
+  - name: Build&Push Docker Image to Home Registry
+    image: plugins/docker
+    settings:
+      registry: registry.potatolab.dev
+      repo: registry.potatolab.dev/adam/${DRONE_REPO_NAME}
+      username: 
+        from_secret: home_registry_username
+      password: 
+        from_secret: home_registry_password
+      tags: 
+        - ${DRONE_COMMIT_BRANCH}-beta
+
+  - name: Build&Push Docker Image to Remote Registry
+    image: plugins/docker
+    settings:
+      registry: docker.io
+      repo: atomicbeast101/${DRONE_REPO_NAME}
+      username: 
+        from_secret: remote_registry_username
+      password: 
+        from_secret: remote_registry_password
+      tags: 
+        - ${DRONE_SOURCE_BRANCH}-beta
+
+  - name: Deploy to Test Infra
+    image: plugins/ansible:3
+    secrets: [ app_api_key ]
+    settings:
+      playbook: tests/playbook.yml
+      inventory: 
+        from_secret: ansible_host
+      syntax_check: true
+    depends_on:
+      - Build&Push Docker Image to Home Registry
+      - Build&Push Docker Image to Remote Registry
+    when:
+      status:
+        - success
+
+  # - name: Run Tests
+  #   image: python
+  #   settings:
+  #     - python tests/test.py
+  #   depends_on:
+  #     - Deploy to Test Infra
+  #   when:
+  #     status:
+  #       - success
+
+  - name: Notify Developer of Success
+    image: plugins/webhook
+    settings:
+      urls:
+        from_secret: gotify_endpoint
+      content_type: application/json
+      template: |
+        {
+          "priority": 5,
+          "title": "Drone DevOps",
+          "message": "[SUCCESS] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image has been successfully tested!"
+        }
+    depends_on:
+      - Deploy to Test Infra
+    when:
+      status:
+        - success
+
+  - name: Notify Developer of Failure
+    image: plugins/webhook
+    settings:
+      urls:
+        from_secret: gotify_endpoint
+      content_type: application/json
+      template: |
+        {
+          "priority": 5,
+          "title": "Drone DevOps",
+          "message": "[FAILED] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image has failed the test(s)!"
+        }
+    depends_on:
+      - Deploy to Test Infra
+    when:
+      status:
+        - failure
+
+---
+kind: pipeline
+type: docker
+name: Production
+
+trigger:
+  event:
+    - promote
+  target:
+    - master
+
+steps:
+  - name: Build&Push Docker Image to Home Registry
     image: plugins/docker
     settings:
       registry: registry.potatolab.dev
@@ -20,40 +116,9 @@ steps:
         from_secret: home_registry_password
       tags: 
         - ${DRONE_COMMIT_BRANCH}
-    when:
-      branch:
-        - v*.*
+        - latest
 
-  # TODO: Include some automated testing here
-
-  - name: Notify Developer
-    image: plugins/webhook
-    settings:
-      urls:
-        from_secret: gotify_endpoint
-      content_type: application/json
-      template: |
-        {
-          "priority": 5,
-          "title": "Drone DevOps",
-          "message": "[${DRONE_STAGE_STATUS}] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image built&pushed to home registry! Test has been completed on it."
-        }
-    depends_on:
-      - Build&Push Docker Image to Registry
-    when:
-      status: [success, failure]
-
----
-kind: pipeline
-type: docker
-name: production
-
-trigger:
-  branch:
-    - master
-
-steps:
-  - name: Build&Push Docker Image to Registry
+  - name: Build&Push Docker Image to Remote Registry
     image: plugins/docker
     settings:
       registry: docker.io
@@ -63,13 +128,37 @@ steps:
       password: 
         from_secret: remote_registry_password
       tags: 
-        - ${DRONE_COMMIT_BRANCH}
+        - ${DRONE_SOURCE_BRANCH}
         - latest
-    when:
-      branch:
-        - master
 
-  - name: Notify Developer
+  - name: Generate Gitea Release
+    image: plugins/gitea-release
+    settings:
+      api_key: 
+        from_secret: gitea_api_key
+      base_url: https://gitea.potatolab.dev
+      files:
+        - bin/*
+        - app.py
+        - LICENSE
+    depends_on:
+      - Build&Push Docker Image to Home Registry
+      - Build&Push Docker Image to Remote Registry
+
+  - name: Generate GitHub Release
+    image: plugins/github-release
+    settings:
+      api_key: 
+        from_secret: github_api_key
+      files:
+        - bin/*
+        - app.py
+        - LICENSE
+    depends_on:
+      - Build&Push Docker Image to Home Registry
+      - Build&Push Docker Image to Remote Registry
+
+  - name: Notify Developer of Success
     image: plugins/webhook
     settings:
       urls:
@@ -79,9 +168,30 @@ steps:
         {
           "priority": 5,
           "title": "Drone DevOps",
-          "message": "[${DRONE_STAGE_STATUS}] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} image built&pushed to docker.io!"
+          "message": "[SUCCESS] ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH} has been released to Gitea/GitHub and pushed to Docker Hub!"
         }
     depends_on:
-      - Build&Push Docker Image to Registry
+      - Generate Gitea Release
+      - Generate GitHub Release
     when:
-      status: [success, failure]
+      status:
+        - success
+
+  - name: Notify Developer of Failure
+    image: plugins/webhook
+    settings:
+      urls:
+        from_secret: gotify_endpoint
+      content_type: application/json
+      template: |
+        {
+          "priority": 5,
+          "title": "Drone DevOps",
+          "message": "[FAILED] Unable to release/push ${DRONE_REPO_NAME}:${DRONE_COMMIT_BRANCH}!"
+        }
+    depends_on:
+      - Generate Gitea Release
+      - Generate GitHub Release
+    when:
+      status:
+        - failure
