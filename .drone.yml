@@ -12,9 +12,8 @@ steps:
   - name: Build&Push Docker Image to Registry
     image: plugins/docker
     settings:
-      registry: 
-        from_secret: home_registry_host
-      repo: adam/${DRONE_REPO_NAME}
+      registry: registry.potatolab.dev
+      repo: registry.potatolab.dev/adam/${DRONE_REPO_NAME}
       username: 
         from_secret: home_registry_username
       password: 
