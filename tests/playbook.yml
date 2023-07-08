@@ -54,7 +54,7 @@
         mode: 0744
 
     - name: Create & run docker containers
-      community.docker.docker_compose:
+      docker_compose:
         project_src: /root
       register: output
 
