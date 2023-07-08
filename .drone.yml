@@ -36,8 +36,9 @@ steps:
     secrets: [ app_api_key ]
     settings:
       playbook: tests/playbook.yml
-      inventory: 
-        from_secret: ansible_host
+      inventory: tests/inventory
+      private_key:
+        from_secret: test_server_key
       syntax_check: true
       requirements: tests/python_requirements.txt
     # depends_on:
